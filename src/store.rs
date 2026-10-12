@@ -250,18 +250,23 @@ fn gpu(spec: &Spec, root: &Path) -> Result<Vec<String>> {
         }
     }
     dependencies(Path::new("/usr/bin/nvidia-smi"), root)?;
+    let library_dir = Path::new(if cfg!(target_arch = "aarch64") {
+        "/usr/lib/aarch64-linux-gnu"
+    } else {
+        "/usr/lib/x86_64-linux-gnu"
+    });
     for name in [
         "libcuda.so.1",
         "libnvidia-ml.so.1",
         "libnvidia-ptxjitcompiler.so.1",
         "libnvidia-nvvm.so.4",
     ] {
-        let lib = Path::new("/usr/lib/x86_64-linux-gnu").join(name);
+        let lib = library_dir.join(name);
         if lib.exists() {
             dependencies(&lib, root)?;
         }
     }
-    for entry in fs::read_dir("/usr/lib/x86_64-linux-gnu")?.flatten() {
+    for entry in fs::read_dir(library_dir)?.flatten() {
         if entry
             .file_name()
             .to_string_lossy()
